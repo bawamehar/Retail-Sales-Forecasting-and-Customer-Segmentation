@@ -181,7 +181,7 @@ practical retail insights.
 ---
 
 **UI**
-![Dashboard Preview](dashboard.png)
+![Dashboard Preview](dashboard.PNG)
 
 **Architecture Diagram**
 ![Architecture Diagram](architecture_diagram.png)
@@ -189,5 +189,5 @@ practical retail insights.
 
 ![Requirements File](requirements.txt)
 
-**Developed by Mehar Singh Bawa**
+**Developed by Mehar Singh Bawa**  
 Retail Analytics | Data Science | Forecasting

@@ -1,12 +1,16 @@
 import streamlit as st
+import pandas as pd
 from src.dataload import load_data
 from src.initial_eda.preprocessing import clean_retail_data, get_eda_dataframe, get_cancelled_invoices
 from src.initial_eda.analysis_utils import get_top_entities, get_monthly_trend
-from src.plots_utils import plot_bar_chart, plot_time_series, plot_revenue_scatter, plot_rfm_distribution, plot_rfm_heatmap, plot_segment_share, plot_mba_scatter
+from src.plots_utils import plot_bar_chart, plot_time_series, plot_revenue_scatter, plot_rfm_distribution, plot_rfm_heatmap, plot_segment_share, plot_mba_scatter, plot_forecast_results
 from src.rfm.preprocess_rfm import assign_rfm_scores, calculate_rfm_metrics, segment_customers
 from src.association_rule_mining.preprocess_mba import prepare_basket
 from src.association_rule_mining.model_apriori import generate_association_rules
 from src.association_rule_mining.model_fpgrowth import run_fpgrowth_analysis
+from src.forecasting.preprocess_ts import prepare_time_series_data, split_train_test
+from src.forecasting.model_arima import train_auto_arima, get_forecast, calculate_metrics
+from src.forecasting.model_linear import prepare_regression_features, train_linear_model, get_regression_metrics
 
 def main():
     
@@ -27,7 +31,7 @@ def main():
     st.sidebar.header("Dashboard Settings")
     top_n = st.sidebar.slider("Select Number of Top Items", min_value=5, max_value=30, value=10)
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Sales Analysis", "Cancellations", "Customers & Quantity", "RFM Analysis", "Market Basket Analysis"])
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Sales Analysis", "Cancellations", "Customers & Quantity", "RFM Analysis", "Market Basket Analysis", "Time Series Forecasting"])
 
     with tab1:
         st.subheader(f"Revenue Generating Products")
@@ -163,7 +167,7 @@ def main():
 
         basket = get_basket_data(df)
 
-        # 3. Model Execution
+
         with st.spinner(f"Running {algo_choice} algorithm..."):
             if "FP-Growth" in algo_choice:
         
@@ -200,7 +204,44 @@ def main():
 
         else:
             st.warning("No rules found with these thresholds. Try lowering the Support or Confidence values.")
+    
+    with tab6:
+        st.header("Sales Forecasting Dashboard")
+        
+        # Preprocessing
+        daily_sales = prepare_time_series_data(df1)
+        train_s, test_s = split_train_test(daily_sales, test_days=45)
+        
+        model_type = st.radio("Select Forecasting Model", ["ARIMA (Auto-tuned)", "Linear Regression"], horizontal=True)
 
+        if model_type == "ARIMA (Auto-tuned)":
+            with st.spinner("Tuning ARIMA parameters..."):
+                model = train_auto_arima(train_s)
+                forecast = get_forecast(model, 45, test_s.index)
+                mae, rmse = calculate_metrics(test_s, forecast)
+                st.write(f"**Best Model Order:** {model.order}")
+
+        else:
+            # Linear Regression logic
+            full_df = prepare_regression_features(daily_sales)
+            train_reg = full_df.iloc[:-45]
+            test_reg = full_df.iloc[-45:]
+            
+            X_train, y_train = train_reg[['Day', 'Weekday']], train_reg['TotalSales']
+            X_test, y_test = test_reg[['Day', 'Weekday']], test_reg['TotalSales']
+            
+            lr_model = train_linear_model(X_train, y_train)
+            forecast = pd.Series(lr_model.predict(X_test), index=test_s.index)
+            mae, rmse = get_regression_metrics(y_test, forecast)
+
+        # plot and metrics display
+        m1, m2 = st.columns(2)
+        m1.metric("Mean Absolute Error (MAE)", f"{mae:,.2f}")
+        m2.metric("Root Mean Square Error (RMSE)", f"{rmse:,.2f}")
+        
+        fig_forecast = plot_forecast_results(train_s, test_s, forecast, title=f"{model_type} Performance")
+        st.plotly_chart(fig_forecast, use_container_width=True)
+    
 
 if __name__ == "__main__":
     main()

@@ -121,3 +121,23 @@ def plot_mba_scatter(rules_df, title="Support vs Confidence (Size/Color = Lift)"
     
     fig.update_layout(xaxis_title="Support", yaxis_title="Confidence")
     return fig
+
+
+def plot_forecast_results(train, test, forecast, title="Sales Forecast vs Actual"):
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(x=train.index, y=train, name='Train', line=dict(color='blue')))
+    
+    fig.add_trace(go.Scatter(x=test.index, y=test, name='Actual (Test)', line=dict(color='green')))
+    
+    fig.add_trace(go.Scatter(x=forecast.index, y=forecast, name='Forecast', line=dict(color='red', dash='dash')))
+
+    fig.update_layout(
+        title=title,
+        xaxis_title="Date",
+        yaxis_title="Sales",
+        template="plotly_white",
+        hovermode="x unified"
+    )
+    return fig

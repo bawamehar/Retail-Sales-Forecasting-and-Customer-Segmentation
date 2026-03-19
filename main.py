@@ -2,8 +2,11 @@ import streamlit as st
 from src.dataload import load_data
 from src.initial_eda.preprocessing import clean_retail_data, get_eda_dataframe, get_cancelled_invoices
 from src.initial_eda.analysis_utils import get_top_entities, get_monthly_trend
-from src.plots_utils import plot_bar_chart, plot_time_series, plot_revenue_scatter, plot_rfm_distribution, plot_rfm_heatmap, plot_segment_share
+from src.plots_utils import plot_bar_chart, plot_time_series, plot_revenue_scatter, plot_rfm_distribution, plot_rfm_heatmap, plot_segment_share, plot_mba_scatter
 from src.rfm.preprocess_rfm import assign_rfm_scores, calculate_rfm_metrics, segment_customers
+from src.association_rule_mining.preprocess_mba import prepare_basket
+from src.association_rule_mining.model_apriori import generate_association_rules
+from src.association_rule_mining.model_fpgrowth import run_fpgrowth_analysis
 
 def main():
     
@@ -24,7 +27,7 @@ def main():
     st.sidebar.header("Dashboard Settings")
     top_n = st.sidebar.slider("Select Number of Top Items", min_value=5, max_value=30, value=10)
 
-    tab1, tab2, tab3, tab4 = st.tabs(["Sales Analysis", "Cancellations", "Customers & Quantity", "RFM Analysis"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Sales Analysis", "Cancellations", "Customers & Quantity", "RFM Analysis", "Market Basket Analysis"])
 
     with tab1:
         st.subheader(f"Revenue Generating Products")
@@ -141,6 +144,62 @@ def main():
         heatmap_data = rfm_segments.groupby(['R', 'F'])['Monetary'].mean().reset_index()
         fig5 = plot_rfm_heatmap(heatmap_data, 'F', 'R', 'Monetary', "Monetary Heatmap")
         st.plotly_chart(fig5, use_container_width=True)
+        
+    with tab5:
+        st.header("Product Affinity Analysis (MBA)")
+        st.markdown("---")
+
+        col_s1, col_s2, col_s3 = st.columns([1, 1, 1])
+        with col_s1:
+            support_val = st.slider("Min Support", 0.01, 0.10, 0.02, step=0.01, help="The frequency with which the items appear together.")
+        with col_s2:
+            confidence_val = st.slider("Min Confidence", 0.1, 0.9, 0.5, step=0.1, help="The likelihood that an item B is purchased when item A is purchased.")
+        with col_s3:
+            algo_choice = st.radio("Select Algorithm", ["FP-Growth (Fast)", "Apriori"], horizontal=True)
+
+        @st.cache_data
+        def get_basket_data(_df):
+            return prepare_basket(_df)
+
+        basket = get_basket_data(df)
+
+        # 3. Model Execution
+        with st.spinner(f"Running {algo_choice} algorithm..."):
+            if "FP-Growth" in algo_choice:
+        
+                mba_rules = run_fpgrowth_analysis(
+                    basket, 
+                    min_support=support_val, 
+                    min_confidence=confidence_val
+                )
+            else:
+
+                mba_rules = generate_association_rules(
+                    basket, 
+                    min_support=support_val, 
+                    min_confidence=confidence_val
+                )
+
+        if not mba_rules.empty:
+            display_rules = mba_rules.copy()
+            display_rules['antecedents'] = display_rules['antecedents'].apply(lambda x: ', '.join(list(x)))
+            display_rules['consequents'] = display_rules['consequents'].apply(lambda x: ', '.join(list(x)))
+
+
+            st.subheader(f"Top {top_n} Associations by Lift ({algo_choice})")
+            st.dataframe(display_rules.head(top_n), use_container_width=True)
+
+            st.markdown("---")
+            
+            # plot
+            st.subheader("Rule Distribution: Support vs Confidence")
+            fig_mba = plot_mba_scatter(mba_rules, title=f"Association Rules Impact ({algo_choice})")
+            st.plotly_chart(fig_mba, use_container_width=True)
+            
+            st.info("**Tip:** Lift > 1 indicates a strong positive association. Hover over points to see specific product rules!")
+
+        else:
+            st.warning("No rules found with these thresholds. Try lowering the Support or Confidence values.")
 
 
 if __name__ == "__main__":

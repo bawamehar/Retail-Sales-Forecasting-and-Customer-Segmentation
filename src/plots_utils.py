@@ -96,3 +96,28 @@ def plot_segment_share(df, x_col, y_col, title, color_hex="#636EFA"):
         xaxis={'type':'category'}
     )
     return fig
+
+
+def plot_mba_scatter(rules_df, title="Support vs Confidence (Size/Color = Lift)"):
+
+    plot_df = rules_df.copy()
+    plot_df['rule'] = (
+        plot_df['antecedents'].apply(lambda x: ', '.join(list(x))) + 
+        " -> " + 
+        plot_df['consequents'].apply(lambda x: ', '.join(list(x)))
+    )
+
+    fig = px.scatter(
+        plot_df, 
+        x="support", 
+        y="confidence", 
+        size="lift", 
+        color="lift",
+        hover_name="rule", 
+        title=title,
+        template="plotly_white",
+        color_continuous_scale='viridis'
+    )
+    
+    fig.update_layout(xaxis_title="Support", yaxis_title="Confidence")
+    return fig

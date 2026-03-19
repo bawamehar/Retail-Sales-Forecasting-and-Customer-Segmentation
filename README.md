@@ -55,7 +55,7 @@ Engineered customer-level features:
 Classic **Pareto Principle (80/20 rule)** scenario:
 
 - Champions = 25% of customers  
-- Contribute = 71% of total revenue  
+- Contribute = 66% of total revenue  
 
 Retail business is heavily dependent on a small elite group. Retaining these high-value customers is critical.
 

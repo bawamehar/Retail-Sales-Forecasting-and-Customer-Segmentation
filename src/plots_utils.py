@@ -1,5 +1,6 @@
 import plotly.express as px
 import plotly.graph_objects as go
+import numpy as np
 
 
 def plot_bar_chart(df, x_col, y_col, title, color_hex="#636EFA"):
@@ -139,5 +140,71 @@ def plot_forecast_results(train, test, forecast, title="Sales Forecast vs Actual
         yaxis_title="Sales",
         template="plotly_white",
         hovermode="x unified"
+    )
+    return fig
+
+
+def plot_top_rfm_distribution(df, x_col, y_col, title):
+
+    plot_df = df.copy()
+    plot_df[x_col] = plot_df[x_col].astype(str)
+    
+    fig = px.bar(
+        plot_df, 
+        x=x_col, 
+        y=y_col, 
+        #color=y_col,               
+        text_auto='d',             
+        title=title,
+        template="plotly_white",
+        #color_continuous_scale='viridis'
+    )
+    
+    fig.update_traces(textposition='outside')
+    
+    fig.update_layout(
+        xaxis_title="RFM Score",
+        yaxis_title="Number of Customers",
+        coloraxis_showscale=False,  
+        xaxis={'type': 'category'} 
+    )
+    return fig
+
+
+def plot_pareto_curve(revenue_series):
+
+    revenue_sorted = revenue_series.sort_values(ascending=False)
+    cumulative_revenue = (revenue_sorted.cumsum() / revenue_sorted.sum()) * 100
+
+    percent_customers = (np.arange(1, len(revenue_sorted) + 1) / len(revenue_sorted)) * 100
+
+    idx_80 = np.searchsorted(cumulative_revenue, 80)
+    customer_percent_at_80 = percent_customers[idx_80]
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=percent_customers, 
+        y=cumulative_revenue,
+        mode='lines',
+        name='Cumulative Revenue',
+        line=dict(color='blue', width=3),
+        hovertemplate='Top %{x:.2f}% Customers<br>Contribution: %{y:.2f}%'
+    ))
+
+    fig.add_hline(y=80, line_dash="dash", line_color="red", 
+                  annotation_text="80% Revenue Target", annotation_position="bottom right")
+
+
+    fig.add_vline(x=customer_percent_at_80, line_dash="dash", line_color="green",
+                  annotation_text=f"Top {customer_percent_at_80:.1f}% Customers", 
+                  annotation_position="top left")
+
+    fig.update_layout(
+        title="Pareto Analysis: Revenue Contribution by Customers",
+        xaxis_title="Percentage of Customers (%)",
+        yaxis_title="Cumulative Revenue (%)",
+        template="plotly_white",
+        hovermode="x"
     )
     return fig

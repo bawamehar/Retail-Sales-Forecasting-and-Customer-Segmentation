@@ -123,6 +123,44 @@ ARIMA slightly better on MAE; Linear Regression slightly better on RMSE.
 
 ---
 
+# Project Structure
+
+```text
+├── data/                       # Contains raw retail data
+├── src/
+│   ├── association_rule_mining/
+│   │   ├── model_apriori.py    # Apriori algorithm logic
+│   │   ├── model_fpgrowth.py   # FP-Growth algorithm logic
+│   │   └── preprocess_mba.py   # Encoding for Market Basket Analysis
+│   ├── forecasting/
+│   │   ├── model_arima.py      # ARIMA Time Series modeling
+│   │   ├── model_linear.py     # Linear Regression forecasting
+│   │   └── preprocess_ts.py    # Time series data preparation
+│   ├── initial_eda/
+│   │   ├── analysis_utils.py   # General analysis helper functions
+│   │   └── preprocessing.py    # Initial data cleaning and ETL
+│   ├── rfm/
+│   │   └── preprocess_rfm.py   # RFM Scoring and Segmentation logic
+│   ├── dataload.py             # Central data loading module
+│   └── plots_utils.py          # Unified Plotly visualization functions
+├── main.py                     # Streamlit application entry point
+```
+
+---
+
+# Getting Started
+
+1. **Installation:** 
+Clone the repository and install the required dependencies:
+- git clone https://github.com/bawamehar/Retail-Sales-Forecasting-and-Customer-Segmentation
+- pip install -r requirements.txt
+
+2. **Execution:** 
+Launch the Streamlit dashboard:
+- streamlit run main.py
+
+---
+
 # 🚀 Final Takeaway
 
 Retail revenue is highly concentrated among top customers, and strong product bundling opportunities exist within niche segments.  
@@ -142,5 +180,14 @@ practical retail insights.
 
 ---
 
-Author: Mehar Singh Bawa  
+**UI**
+![Dashboard Preview](dashboard.png)
+
+**Architecture Diagram**
+![Architecture Diagram](architecture_diagram.png)
+
+
+![Requirements File](requirements.txt)
+
+**Developed by Mehar Singh Bawa**
 Retail Analytics | Data Science | Forecasting

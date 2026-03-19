@@ -3,7 +3,7 @@ import pandas as pd
 from src.dataload import load_data
 from src.initial_eda.preprocessing import clean_retail_data, get_eda_dataframe, get_cancelled_invoices
 from src.initial_eda.analysis_utils import get_top_entities, get_monthly_trend
-from src.plots_utils import plot_bar_chart, plot_time_series, plot_revenue_scatter, plot_rfm_distribution, plot_rfm_heatmap, plot_segment_share, plot_mba_scatter, plot_forecast_results
+from src.plots_utils import plot_bar_chart, plot_time_series, plot_revenue_scatter, plot_rfm_distribution, plot_rfm_heatmap, plot_segment_share, plot_mba_scatter, plot_forecast_results, plot_top_rfm_distribution, plot_pareto_curve
 from src.rfm.preprocess_rfm import assign_rfm_scores, calculate_rfm_metrics, segment_customers
 from src.association_rule_mining.preprocess_mba import prepare_basket
 from src.association_rule_mining.model_apriori import generate_association_rules
@@ -89,7 +89,7 @@ def main():
         top_rfm_scores = rfm_counts.sort_values(by='Count', ascending=False).head(top_n)
 
         #top_rfm_scores = rfm_segments['RFM'].value_counts().sort_values(ascending=False).head(top_n)
-        fig_rfm_scores = plot_segment_share(top_rfm_scores, 'RFM', 'Count', f"Top {top_n} RFM Scores by Customer Count")
+        fig_rfm_scores = plot_top_rfm_distribution(top_rfm_scores, 'RFM', 'Count', f"Top {top_n} RFM Scores by Customer Count")
         st.plotly_chart(fig_rfm_scores, use_container_width=True)
         st.divider()
 
@@ -148,6 +148,13 @@ def main():
         heatmap_data = rfm_segments.groupby(['R', 'F'])['Monetary'].mean().reset_index()
         fig5 = plot_rfm_heatmap(heatmap_data, 'F', 'R', 'Monetary', "Monetary Heatmap")
         st.plotly_chart(fig5, use_container_width=True)
+
+        #plot 7
+        st.subheader("The Pareto Analysis")
+        fig_pareto = plot_pareto_curve(rfm_segments['Monetary'])
+        st.plotly_chart(fig_pareto, use_container_width=True)
+        st.info(f"**Business Insight:** Notice how quickly the curve rises. This visualization proves that top customers are the engine of the business.")
+
         
     with tab5:
         st.header("Product Affinity Analysis (MBA)")

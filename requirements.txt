@@ -1,0 +1,17 @@
+# Web Framework
+streamlit
+
+# Data Processing
+pandas
+numpy
+
+# Visualization
+plotly
+
+# Machine Learning & Statistics
+scikit-learn
+statsmodels
+pmdarima
+
+# Association Rule Mining
+mlxtend
